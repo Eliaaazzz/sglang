@@ -223,7 +223,9 @@ class SamplingParams(msgspec.Struct, kw_only=True, array_like=True):
             # top_k = 1 means greedy sampling
             self.temperature = 1.0
             self.top_k = 1
-        if self.top_k == -1:
+        # Anything past TOP_K_ALL also means the whole vocabulary; it must not
+        # reach the scheduler, which packs top_k into an int32 tensor.
+        if self.top_k == -1 or self.top_k > TOP_K_ALL:
             self.top_k = TOP_K_ALL  # whole vocabulary
 
     def verify(self, vocab_size):

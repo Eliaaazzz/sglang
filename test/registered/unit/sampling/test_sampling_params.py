@@ -63,6 +63,15 @@ class TestSamplingParamsInit(CustomTestCase):
         sp = SamplingParams(top_k=50)
         self.assertEqual(sp.top_k, 50)
 
+    def test_oversized_top_k_becomes_top_k_all(self):
+        """A top_k beyond int32 used to crash the scheduler when it built the
+        int32 top_ks tensor, taking the whole server down with one request."""
+        for top_k in (TOP_K_ALL + 1, 2**31, 2**63 - 1):
+            with self.subTest(top_k=top_k):
+                sp = SamplingParams(top_k=top_k)
+                self.assertEqual(sp.top_k, TOP_K_ALL)
+                sp.verify(vocab_size=32000)
+
     def test_stop_token_ids_stored_as_set(self):
         """Test that stop_token_ids list is converted to set."""
         sp = SamplingParams(stop_token_ids=[1, 2, 3])
